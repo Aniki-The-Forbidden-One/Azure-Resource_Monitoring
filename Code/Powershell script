@@ -1,0 +1,6 @@
+$script = {
+    while ($true) {
+        Start-Sleep -Milliseconds 10
+    }
+}
+1..4 | ForEach-Object { Start-Job -ScriptBlock $script }
