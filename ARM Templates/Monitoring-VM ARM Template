@@ -1,0 +1,126 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "extensions_Microsoft_Insights_VMDiagnosticsSettings_xmlCfg": {
+            "type": "SecureString"
+        },
+        "extensions_Microsoft_Insights_VMDiagnosticsSettings_storageAccountName": {
+            "type": "SecureString"
+        },
+        "extensions_Microsoft_Insights_VMDiagnosticsSettings_storageAccountKey": {
+            "type": "SecureString"
+        },
+        "extensions_Microsoft_Insights_VMDiagnosticsSettings_storageAccountEndPoint": {
+            "type": "SecureString"
+        },
+        "virtualMachines_Monitoring_VM_name": {
+            "defaultValue": "Monitoring-VM",
+            "type": "String"
+        },
+        "disks_Monitoring_VM_OsDisk_1_4df289951291413c8dd59bd1913c9de4_externalid": {
+            "defaultValue": "/subscriptions/9d8c6a3b-f0cb-4e14-8d3c-8ce64b81b250/resourceGroups/AZUREPROJECT/providers/Microsoft.Compute/disks/Monitoring-VM_OsDisk_1_4df289951291413c8dd59bd1913c9de4",
+            "type": "String"
+        },
+        "networkInterfaces_monitoring_vm856_externalid": {
+            "defaultValue": "/subscriptions/9d8c6a3b-f0cb-4e14-8d3c-8ce64b81b250/resourceGroups/AzureProject/providers/Microsoft.Network/networkInterfaces/monitoring-vm856",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2024-07-01",
+            "name": "[parameters('virtualMachines_Monitoring_VM_name')]",
+            "location": "uksouth",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_B1s"
+                },
+                "additionalCapabilities": {
+                    "hibernationEnabled": false
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsDesktop",
+                        "offer": "Windows-10",
+                        "sku": "win10-22h2-pro-g2",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Windows",
+                        "name": "[concat(parameters('virtualMachines_Monitoring_VM_name'), '_OsDisk_1_4df289951291413c8dd59bd1913c9de4')]",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "id": "[parameters('disks_Monitoring_VM_OsDisk_1_4df289951291413c8dd59bd1913c9de4_externalid')]"
+                        },
+                        "deleteOption": "Delete"
+                    },
+                    "dataDisks": [],
+                    "diskControllerType": "SCSI"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('virtualMachines_Monitoring_VM_name')]",
+                    "adminUsername": "anikiadmin",
+                    "windowsConfiguration": {
+                        "provisionVMAgent": true,
+                        "enableAutomaticUpdates": true,
+                        "patchSettings": {
+                            "patchMode": "AutomaticByOS",
+                            "assessmentMode": "ImageDefault",
+                            "enableHotpatching": false
+                        }
+                    },
+                    "secrets": [],
+                    "allowExtensionOperations": true,
+                    "requireGuestProvisionSignal": true
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[parameters('networkInterfaces_monitoring_vm856_externalid')]",
+                            "properties": {
+                                "deleteOption": "Delete"
+                            }
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true
+                    }
+                },
+                "licenseType": "Windows_Client"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2024-07-01",
+            "name": "[concat(parameters('virtualMachines_Monitoring_VM_name'), '/Microsoft.Insights.VMDiagnosticsSettings')]",
+            "location": "uksouth",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachines_Monitoring_VM_name'))]"
+            ],
+            "properties": {
+                "autoUpgradeMinorVersion": true,
+                "publisher": "Microsoft.Azure.Diagnostics",
+                "type": "IaaSDiagnostics",
+                "typeHandlerVersion": "1.5",
+                "settings": {
+                    "StorageAccount": "monitoringstorageacc2024",
+                    "xmlCfg": "[parameters('extensions_Microsoft_Insights_VMDiagnosticsSettings_xmlCfg')]"
+                },
+                "protectedSettings": {
+                    "storageAccountName": "[parameters('extensions_Microsoft_Insights_VMDiagnosticsSettings_storageAccountName')]",
+                    "storageAccountKey": "[parameters('extensions_Microsoft_Insights_VMDiagnosticsSettings_storageAccountKey')]",
+                    "storageAccountEndPoint": "[parameters('extensions_Microsoft_Insights_VMDiagnosticsSettings_storageAccountEndPoint')]"
+                }
+            }
+        }
+    ]
+}
